@@ -55,10 +55,17 @@ public class FastCollinearPoints {
         }
     }
 
+    /*
+    * to maintain the initial sequent order, that is, stability (by point itself)
+    * sorting alg should consider this situation
+    * while Arrays.sort() for primitive types applies quick sort
+    * and Arrays.sort(T[], Comparator<? super T>) -->
+    * System.setProperty("java.util.Arrays.useLegacyMergeSort", "true") --> merge sort (stable)
+    * comparator == null --> quick sort (unstable)
+    * otherwise --> tim sort after jdk 1.7
+    * tim sort combines merge sort and insertion sort so stable
+    * */
     private void fastSearch() {
-        // maintain the initial sequent order, that is, stability (by point itself)
-        // setProperty is forbidden
-//        System.setProperty("java.util.Arrays.useLegacyMergeSort", "true");
         int n = points.length;
         for (int i = 0; i < n - 3; i++) {
             Point first = points[i];
@@ -92,10 +99,12 @@ public class FastCollinearPoints {
         }
     }
 
-    // insert element into list of pairs, since hashmap is forbidden
-    // search o(logN), insert worst case o(N), validate worst case o(N)
-    // hashmap<double,hashset<>> will do better since without hash collision
-    // search o(1), put o(1), validate o(1)
+    /*
+    * insert element into list of pairs, since hashmap is forbidden
+    * search o(logN), insert worst case o(N), validate worst case o(N)
+    * hashmap<double,hashset<>> will do better since without hash collision
+    * search o(1), put o(1), validate o(1)
+    * */
     private boolean insertPairs(double slope, Point last) {
         int index = lessThanAndEqual(slope);
         if (index < 0 || pairs.get(index).slope != slope) {
