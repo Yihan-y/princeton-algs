@@ -12,7 +12,10 @@ public class FastCollinearPoints {
     private final Point[] points;
     private int segments;
     private final List<LineSegment> list;
-    private List<Point> lastPoints;
+    // restore <slope, lastPoint>
+    // when slopes are identical, check lastPoints identical or not
+    // maintain the list, since hashmap is forbidden
+    private List<MyPair> pairs;
 
     // finds all line segments containing 4 or more points
     public FastCollinearPoints(Point[] points) {
@@ -23,7 +26,7 @@ public class FastCollinearPoints {
         validateAndSort();
         segments = 0;
         list = new ArrayList<>();
-        lastPoints = new ArrayList<>();
+        pairs = new ArrayList<>();
         fastSearch();
     }
 
@@ -63,28 +66,70 @@ public class FastCollinearPoints {
 //            Arrays.sort(tmp, first.slopeOrder());
             mergeSort(tmp, 0, tmp.length - 1, first.slopeOrder());
             int cnt = 1;
+            double slope = Double.NaN;
             for (int j = 0; j < tmp.length - 1; j++) {
-                if (first.slopeTo(tmp[j]) == first.slopeTo(tmp[j + 1])) {
+                if ((slope = first.slopeTo(tmp[j])) == first.slopeTo(tmp[j + 1])) {
                     cnt++;
                 }else {
                     // in case sub-segments occur
-                    avoidSub(cnt, first, tmp[j]);
+                    avoidSub(cnt, first, tmp[j], slope);
                     cnt = 1;
                 }
             }
             // last element
-            avoidSub(cnt, first, tmp[tmp.length - 1]);
+            avoidSub(cnt, first, tmp[tmp.length - 1], slope);
         }
-        lastPoints = null;
+        pairs = null;
     }
 
-    private void avoidSub(int cnt, Point first, Point cur) {
-        if (cnt >= 3 &&
-                (lastPoints.isEmpty() || lastPoints.get(lastPoints.size() - 1) != cur)) {
-            lastPoints.add(cur);
+    private void avoidSub(int cnt, Point first, Point cur, double slope) {
+        if (Double.isNaN(slope)) {
+            return;
+        }
+        if (cnt >= 3 && insertPairs(slope, cur)) {
             list.add(new LineSegment(first, cur));
             segments++;
         }
+    }
+
+    // insert element into list of pairs, since hashmap is forbidden
+    // search o(logN), insert worst case o(N), validate worst case o(N)
+    // hashmap<double,hashset<>> will do better since without hash collision
+    // search o(1), put o(1), validate o(1)
+    private boolean insertPairs(double slope, Point last) {
+        int index = lessThanAndEqual(slope);
+        if (index < 0 || pairs.get(index).slope != slope) {
+            List<Point> cur = new ArrayList<>();
+            cur.add(last);
+            pairs.add(Math.max(index + 1, 0), new MyPair(slope, cur));
+            return true;
+        }
+        List<Point> lastPoints = pairs.get(index).lastPoints;
+        for (Point p : lastPoints) {
+            if (p == last) {
+                return false;
+            }
+        }
+        lastPoints.add(last);
+        return true;
+    }
+
+    // search index of list by slope o(logN)
+    private int lessThanAndEqual(double slope) {
+        int low = 0, hi = pairs.size() - 1;
+        while (low <= hi) {
+            int mid = low + (hi - low) / 2;
+            double cur = pairs.get(mid).slope;
+            int diff = Double.compare(slope, cur);
+            if (diff < 0) {
+                hi = mid - 1;
+            }else if (diff > 0) {
+                low = mid + 1;
+            }else {
+                return mid;
+            }
+        }
+        return hi;
     }
 
     private void mergeSort(Point[] arr, int low, int hi, Comparator<Point> comparator) {
@@ -113,6 +158,16 @@ public class FastCollinearPoints {
         i = 0;
         while (i < index) {
             arr[i + low] = tmp[i++];
+        }
+    }
+
+    private class MyPair {
+        private final double slope;
+        private final List<Point> lastPoints;
+
+        public MyPair(double slope, List<Point> lastPoints) {
+            this.slope = slope;
+            this.lastPoints = lastPoints;
         }
     }
 
