@@ -7,17 +7,17 @@ import edu.princeton.cs.algs4.StdOut;
 
 public class Solver {
     private static final boolean MANHATTAN = true;
-    private final MinPQ<MyBoard> gameTree;
-    private MyBoard last;
+    // to make Solver immutable
+    private final Stack<Board> iterable;
+    private MyBoard root;
     private int moves;
 
     // find a solution to the initial board (using the A* algorithm)
     public Solver(Board initial) {
         validate(initial);
-        gameTree = new MinPQ<>();
-        gameTree.insert(new MyBoard(initial, null, 0, MANHATTAN));
         moves = -1;
-        solve();
+        solve(initial);
+        iterable = initIterable();
     }
 
     // is the initial board solvable? (see below)
@@ -32,14 +32,6 @@ public class Solver {
 
     // sequence of boards in a shortest solution; null if unsolvable
     public Iterable<Board> solution() {
-        if (!isSolvable()) {
-            return null;
-        }
-        Stack<Board> iterable = new Stack<>();
-        while (last != null) {
-            iterable.push(last.board);
-            last = last.prev;
-        }
         return iterable;
     }
 
@@ -56,33 +48,54 @@ public class Solver {
     private int manhattanPriority(Board board, int moves) {
         return board.manhattan() + moves;
     }
+    
+    private MinPQ<MyBoard> initMinPQ(Board board) {
+        MinPQ<MyBoard> gameTree = new MinPQ<>();
+        gameTree.insert(new MyBoard(board, null, 0, MANHATTAN));
+        return gameTree;
+    }
 
-    private boolean solve() {
-        Board twin = gameTree.min().board.twin();
-        MinPQ<MyBoard> twinTree = new MinPQ<>();
-        twinTree.insert(new MyBoard(twin, null, 0, MANHATTAN));
-        MyBoard peek, twinPeek = null;
-        assert !gameTree.isEmpty();
-        while (!(peek = gameTree.delMin()).board.isGoal() && !(twinPeek = twinTree.delMin()).board.isGoal()) {
-            for (Board b : peek.board.neighbors()) {
-                if (peek.prev != null && b == peek.prev.board) {
+    private Stack<Board> initIterable() {
+        if (!isSolvable()) {
+            return null;
+        }
+        Stack<Board> iterable = new Stack<>();
+        while (root != null) {
+            iterable.push(root.board);
+            root = root.prev;
+        }
+        return iterable;
+    }
+
+    /*
+     * (i) those that lead to the goal board and
+     * (ii) those that lead to the goal board if we modify the initial board by swapping any pair of blocks (the blank square is not a block).
+     * if root turns out unsolvable, swapped twin can be solved
+     * */
+    private boolean solve(Board initial) {
+        MinPQ<MyBoard> gameTree = initMinPQ(initial);
+        MinPQ<MyBoard> twinTree = initMinPQ(initial.twin());
+        MyBoard root, twinRoot = null;
+        assert !gameTree.isEmpty() && !twinTree.isEmpty();
+        while (!(root = gameTree.delMin()).board.isGoal() && !(twinRoot = twinTree.delMin()).board.isGoal()) {
+            for (Board b : root.board.neighbors()) {
+                if (root.prev != null && b.equals(root.prev.board)) {
                     continue;
                 }
-                gameTree.insert(new MyBoard(b, peek, peek.moves + 1, MANHATTAN));
+                gameTree.insert(new MyBoard(b, root, root.moves + 1, MANHATTAN));
             }
-            for (Board b : twinPeek.board.neighbors()) {
-                if (twinPeek.prev != null && b == twinPeek.prev.board) {
+            for (Board b : twinRoot.board.neighbors()) {
+                if (twinRoot.prev != null && b.equals(twinRoot.prev.board)) {
                     continue;
                 }
-                twinTree.insert(new MyBoard(b, twinPeek, twinPeek.moves + 1, MANHATTAN));
+                twinTree.insert(new MyBoard(b, twinRoot, twinRoot.moves + 1, MANHATTAN));
             }
         }
-        assert twinPeek != null;
-        if (twinPeek.board.isGoal()) {
+        if (twinRoot != null && twinRoot.board.isGoal()) {
             return false;
         }
-        last = peek;
-        this.moves = peek.moves;
+        this.root = root;
+        this.moves = root.moves;
         return true;
     }
 

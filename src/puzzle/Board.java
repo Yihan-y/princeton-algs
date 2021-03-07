@@ -1,7 +1,5 @@
 package puzzle;
 
-import edu.princeton.cs.algs4.StdRandom;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -106,15 +104,28 @@ public class Board {
     public Board twin() {
         int[][] clone = copyArray(tiles);
         int blank = blankX * n + blankY;
-        int random1 = -1, random2 = -1;
-        while (random1 == random2 || random1 == blank || random2 == blank) {
-            random1 = StdRandom.uniform(n * n);
-            random2 = StdRandom.uniform(n * n);
+//        int random1 = -1, random2 = -1;
+//        while (random1 == random2 || random1 == blank || random2 == blank) {
+//            random1 = StdRandom.uniform(n * n);
+//            random2 = StdRandom.uniform(n * n);
+//        }
+//        int a, b;
+//        int x, y;
+//        clone[(a = random1 / n)][(b = random1 % n)] = clone[(x = random2 / n)][(y = random2 % n)];
+//        clone[x][y] = tiles[a][b];
+//        return new Board(clone);
+        /*
+        * check that Board is immutable by testing whether methods
+        * return the same value, regardless of order in which called
+        * since immutable, random is forbidden
+        * */
+        for (int i = 0; i < n * n - 1; i++) {
+            if (i != blank && i + 1 != blank) {
+                clone[i / n][i % n] = clone[(i + 1) / n][(i + 1) % n];
+                clone[(i + 1) / n][(i + 1) % n] = tiles[i / n][i % n];
+                break;
+            }
         }
-        int a, b;
-        int x, y;
-        clone[(a = random1 / n)][(b = random1 % n)] = clone[(x = random2 / n)][(y = random2 % n)];
-        clone[x][y] = tiles[a][b];
         return new Board(clone);
     }
 
