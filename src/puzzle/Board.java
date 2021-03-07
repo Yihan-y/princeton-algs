@@ -6,6 +6,7 @@ import java.util.List;
 public class Board {
     private final int[][] tiles;
     private final int n;
+    private final List<Board> iterable;
     private int blankX, blankY;
 
     // create a board from an n-by-n array of tiles,
@@ -22,6 +23,7 @@ public class Board {
                 }
             }
         }
+        iterable = initIterable();
     }
 
     // string representation of this board
@@ -92,11 +94,6 @@ public class Board {
 
     // all neighboring boards
     public Iterable<Board> neighbors() {
-        List<Board> iterable = new ArrayList<>();
-        insertNeighbor(blankX + 1, blankY, iterable);
-        insertNeighbor(blankX - 1, blankY, iterable);
-        insertNeighbor(blankX, blankY + 1, iterable);
-        insertNeighbor(blankX, blankY - 1, iterable);
         return iterable;
     }
 
@@ -127,6 +124,15 @@ public class Board {
             }
         }
         return new Board(clone);
+    }
+
+    private List<Board> initIterable() {
+        List<Board> iterable = new ArrayList<>();
+        insertNeighbor(blankX + 1, blankY, iterable);
+        insertNeighbor(blankX - 1, blankY, iterable);
+        insertNeighbor(blankX, blankY + 1, iterable);
+        insertNeighbor(blankX, blankY - 1, iterable);
+        return iterable;
     }
 
     private int[][] copyArray(int[][] tiles) {
