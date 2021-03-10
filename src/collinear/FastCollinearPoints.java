@@ -29,8 +29,7 @@ public class FastCollinearPoints {
             throw new IllegalArgumentException();
         }
         this.points = points.clone();
-//        validateAndSort();
-        validate();
+        validateAndSort();
         segments = 0;
         list = new ArrayList<>();
         pairs = new ArrayList<>();
@@ -46,21 +45,6 @@ public class FastCollinearPoints {
     public LineSegment[] segments() {
         LineSegment[] res = new LineSegment[list.size()];
         return list.toArray(res);
-    }
-
-    private void validate() {
-        for (Point p : points) {
-            if (p == null) {
-                throw new IllegalArgumentException();
-            }
-        }
-        BST<Point, Integer> bst = new BST<>();
-        for (Point p : points) {
-            if (bst.get(p) != null) {
-                throw new IllegalArgumentException();
-            }
-            bst.put(p, 0);
-        }
     }
 
     private void validateAndSort() {
