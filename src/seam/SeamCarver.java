@@ -1,6 +1,5 @@
 package seam;
 
-import edu.princeton.cs.algs4.EdgeWeightedDigraph;
 import edu.princeton.cs.algs4.Picture;
 
 import java.awt.Color;
@@ -20,7 +19,7 @@ public class SeamCarver {
 
     // current picture
     public Picture picture() {
-        return picture;
+        return new Picture(picture);
     }
 
     // width of current picture
@@ -46,38 +45,55 @@ public class SeamCarver {
 
     // sequence of indices for horizontal seam
     public int[] findHorizontalSeam() {
-        double[][] horBasedEnergy = new double[height()][width()];
-        for (int i = 0; i < height(); i++) {
-            for (int j = 0; j < width(); j++) {
-                energy[i][j] = energy(j, i);
-            }
-        }
+        double[][] horBasedEnergy = energy;
         return findSP(horBasedEnergy);
     }
 
     // sequence of indices for vertical seam
     public int[] findVerticalSeam() {
-        double[][] verBasedEnergy = energy;
+        double[][] verBasedEnergy = new double[height()][width()];
+        for (int i = 0; i < height(); i++) {
+            for (int j = 0; j < width(); j++) {
+                verBasedEnergy[i][j] = energy(j, i);
+            }
+        }
         return findSP(verBasedEnergy);
     }
 
     // remove horizontal seam from current picture
     public void removeHorizontalSeam(int[] seam) {
-        validateSeam(seam, height());
+        if (height() <= 1) {
+            throw new IllegalArgumentException();
+        }
+        validateNull(seam);
+        validateSeam(seam, width());
         rebuild(seam, width(), height() - 1);
     }
 
     // remove vertical seam from current picture
     public void removeVerticalSeam(int[] seam) {
-        validateSeam(seam, width());
+        if (width() <= 1) {
+            throw new IllegalArgumentException();
+        }
+        validateNull(seam);
+        validateSeam(seam, height());
         rebuild(seam, width() - 1, height());
     }
 
     //  unit testing (optional)
     public static void main(String[] args) {
-
+        int[] seam = new int[] {0};
+        SeamCarver sc = new SeamCarver(new Picture(args[0]));
+        sc.removeHorizontalSeam(seam);
+        System.out.println(sc.picture().toString());
     }
 
+    /*
+    * this problem can be specified as special graph
+    * there's no need to build edgeWeightedDigraph
+    * since topological order appears obvious
+    * and directly relaxation will do
+    * */
     private int[] findSP(double[][] energy) {
         int x = energy.length, y = energy[0].length;
         int[] res = new int[x];
@@ -99,8 +115,9 @@ public class SeamCarver {
             }
         }
         res[index] = minIndex;
+        // backtracking
         while (index-- > 0) {
-            res[index] = edgeTo[index][minIndex];
+            res[index] = edgeTo[index + 1][minIndex];
             minIndex = res[index];
         }
         return res;
@@ -151,7 +168,7 @@ public class SeamCarver {
             distTo[i + 1][j - 1] = cur;
             edgeTo[i + 1][j - 1] = j;
         }
-        if (j < energy.length - 1 && (cur = energy[i + 1][j + 1] + distTo[i][j]) < distTo[i + 1][j + 1]) {
+        if (j < energy[0].length - 1 && (cur = energy[i + 1][j + 1] + distTo[i][j]) < distTo[i + 1][j + 1]) {
             distTo[i + 1][j + 1] = cur;
             edgeTo[i + 1][j + 1] = j;
         }
@@ -178,7 +195,7 @@ public class SeamCarver {
     }
 
     private void validateSeam(int[] seam, int size) {
-        if (size <= 1 || seam.length != size) {
+        if (seam.length != size) {
             throw new IllegalArgumentException();
         }
         for (int i = 0; i < size - 1; i++) {
