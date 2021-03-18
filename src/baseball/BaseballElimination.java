@@ -4,6 +4,7 @@ import edu.princeton.cs.algs4.FlowEdge;
 import edu.princeton.cs.algs4.FlowNetwork;
 import edu.princeton.cs.algs4.FordFulkerson;
 import edu.princeton.cs.algs4.In;
+import edu.princeton.cs.algs4.StdOut;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -92,6 +93,23 @@ public class BaseballElimination {
         return nameToTeam.get(team).certificate;
     }
 
+    // unit testing
+    public static void main(String[] args) {
+        BaseballElimination division = new BaseballElimination(args[0]);
+        for (String team : division.teams()) {
+            if (division.isEliminated(team)) {
+                StdOut.print(team + " is eliminated by the subset R = { ");
+                for (String t : division.certificateOfElimination(team)) {
+                    StdOut.print(t + " ");
+                }
+                StdOut.println("}");
+            }
+            else {
+                StdOut.println(team + " is not eliminated");
+            }
+        }
+    }
+
     private void eliminate(int index) {
         if (trivialElimination(index)) {
             return;
@@ -145,7 +163,7 @@ public class BaseballElimination {
             double capacity = teamToTarget(self, teamIndex);
             flowNetwork.addEdge(new FlowEdge(i, target, capacity));
 
-            teamIndexToVerIndex[teamIndex] = i;
+            teamIndexToVerIndex[teamIndex++] = i;
         }
         // i and j refers to team index
         int vertexIndex = 1;
@@ -164,6 +182,7 @@ public class BaseballElimination {
                 int verEither = teamIndexToVerIndex[i], verOther = teamIndexToVerIndex[j];
                 flowNetwork.addEdge(new FlowEdge(vertexIndex, verEither, INFINITY));
                 flowNetwork.addEdge(new FlowEdge(vertexIndex, verOther, INFINITY));
+                vertexIndex++;
             }
         }
 
